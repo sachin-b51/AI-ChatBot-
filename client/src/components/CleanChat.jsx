@@ -525,7 +525,10 @@ export default function CleanChat() {
         }),
       })
 
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
 
       setIsLoading(false);
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
