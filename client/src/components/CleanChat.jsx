@@ -574,9 +574,10 @@ export default function CleanChat() {
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
+        console.error('Send Error:', err);
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: 'Something went wrong. Please try again.'
+          content: `Error: ${err.message || 'Unknown Failure'}`
         }])
       }
     } finally {
