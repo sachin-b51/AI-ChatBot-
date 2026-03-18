@@ -25,4 +25,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // All API routes behind the secret guard
 app.use('/api', apiGuard, chatRoutes);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+module.exports = app;

@@ -1,17 +1,24 @@
 const mongoose = require('mongoose');
 
+let cachedConn = null;
+
 const connectDB = async () => {
+  if (cachedConn) {
+    return cachedConn;
+  }
+
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 10000, // wait only 10s before failing
+      serverSelectionTimeoutMS: 5000,
     });
+    cachedConn = conn;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (err) {
-    console.error('MongoDB connection error. Possible reasons:');
-    console.error('1. Your current IP is NOT whitelisted in MongoDB Atlas.');
-    console.error('2. Network/Firewall is blocking the connection.');
-    console.error('Error Details:', err.message);
-    process.exit(1);
+    console.error('MongoDB connection error:', err.message);
+    // In serverless, we don't necessarily want to process.exit(1)
+    // as it might be a temporary network blip.
+    throw err;
   }
 };
 
