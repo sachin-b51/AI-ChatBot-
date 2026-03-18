@@ -97,9 +97,13 @@ const IconMenu = () => (
 const IconPlus = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="3" y1="12" x2="21" y2="12"/>
   </svg>
 )
+
+const API_BASE = import.meta.env.PROD 
+  ? '' 
+  : (import.meta.env.VITE_API_URL || 'http://localhost:5000');
 const IconHistory = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -170,7 +174,7 @@ function CodeBlock({ language, children }) {
     setExecuting(true)
     setExecutionRes(null)
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/execute`, {
+      const res = await fetch(`${API_BASE}/api/execute`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -433,7 +437,7 @@ export default function CleanChat() {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/chats`, {
+        const res = await fetch(`${API_BASE}/api/chats`, {
           headers: { 'x-app-secret': import.meta.env.VITE_APP_SECRET || 'any_random_secret_string' }
         })
         if (res.ok) {
@@ -506,7 +510,7 @@ export default function CleanChat() {
     abortRef.current = controller
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/stateless`, {
+      const res = await fetch(`${API_BASE}/api/stateless`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
