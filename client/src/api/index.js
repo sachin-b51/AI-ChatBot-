@@ -17,6 +17,14 @@ export const renameChat = (id, title) => api.patch(`/chats/${id}/title`, { title
 // Messages
 export const getMessages = (chatId) => api.get(`/chats/${chatId}/messages`).then(r => r.data);
 
+// Memories
+export const getMemories = () => api.get('/memories').then(r => r.data);
+export const updateMemory = (id, content) => api.patch(`/memories/${id}`, { content }).then(r => r.data);
+export const deleteMemory = (id) => api.delete(`/memories/${id}`).then(r => r.data);
+
+// Search
+export const searchMessages = (query) => api.get(`/search?q=${encodeURIComponent(query)}`).then(r => r.data);
+
 // Streaming send — returns a fetch Response for SSE
 export const sendMessageStream = (chatId, content) => {
   return fetch(`${BASE}/api/chats/${chatId}/message`, {

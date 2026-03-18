@@ -1,9 +1,11 @@
 const axios = require('axios');
 const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
+const Memory = require('../models/Memory.model');
 const { getMemory } = require('../services/memory.service');
-const { shouldSearch, webSearch } = require('../services/search.service');
-const { streamOpenAI } = require('../services/openai.service');
+const { shouldSearch, serpstackSearch } = require('../services/serpstack.service');
+const { extractFacts } = require('../services/memoryExtraction.service');
+const { streamOpenAI, createEmbedding } = require('../services/openai.service');
 const { readUrl } = require('../services/reader.service');
 const { runAgent } = require('../services/agent.service');
 
@@ -91,14 +93,15 @@ exports.sendMessage = async (req, res) => {
       }
     }
 
-    // 2. Fetch memory (last 20 messages)
+    // 2. Fetch history and memories
     const history = await getMemory(chatId);
+    const memories = await Memory.find().sort({ createdAt: -1 });
 
     // 3. Mode B — auto-detect web search need
     let sources = [];
     let webSearchUsed = false;
-    if (webSearchEnabled && !urlData && shouldSearch(finalContent)) {
-      sources = await webSearch(finalContent);
+    if (webSearchEnabled && !urlData && shouldSearch(finalContent)) { // Keep original condition for now, as the instruction only changed `shouldSearch(content)`
+      sources = await serpstackSearch(finalContent); // Changed from webSearch to serpstackSearch
       webSearchUsed = sources.length > 0;
     }
 
@@ -113,16 +116,38 @@ exports.sendMessage = async (req, res) => {
       res.write(`data: ${JSON.stringify({ sources })}\n\n`);
     }
 
-    const fullContent = await streamOpenAI(res, history, content, sources);
+    const fullContent = await streamOpenAI(res, history, finalContent, sources, memories); // Added memories and used finalContent
 
-    // 5. Save assistant message
-    await Message.create({
+    // 5. Background: Extract new facts from user message
+    extractFacts(content).then(async (facts) => {
+      for (const fact of facts) {
+        // Check if fact already exists (simple duplication check)
+        const exists = await Memory.findOne({ content: fact });
+        if (!exists) {
+          await Memory.create({ content: fact });
+        }
+      }
+    }).catch(err => console.error('Background Extraction Error:', err.message));
+
+    // 6. Save assistant message
+    const assistantMsg = await Message.create({
       chatId,
       role: 'assistant',
       content: fullContent,
       webSearchUsed,
-      sources: webSearchUsed ? sources : [],
+      sources,
     });
+
+    // 7. Background: Generate embeddings for semantic search
+    createEmbedding(content).then(emb => {
+      Message.findOneAndUpdate({ chatId, role: 'user', content }, { embedding: emb }).exec();
+    });
+    createEmbedding(fullContent).then(emb => {
+      assistantMsg.embedding = emb;
+      assistantMsg.save();
+    });
+
+    res.end();
 
     // 6. Update chat metadata
     const chat = await Chat.findById(chatId);

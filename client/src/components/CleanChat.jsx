@@ -11,6 +11,8 @@ import rehypeKatex from 'rehype-katex'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism'
 import 'katex/dist/katex.min.css'
+import { Brain } from 'lucide-react'
+import MemoryPanel from './Memory/MemoryPanel'
 
 import {
   Chart as ChartJS,
@@ -143,6 +145,12 @@ const IconSparkles = () => (
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3l1.912 3.876 4.276.621-3.093 3.016.73 4.259L12 12.75l-3.825 2.022.73-4.259-3.093-3.016 4.276-.621L12 3z"/>
     <path d="M5 3l.765 1.55 1.71.248-1.237 1.206.292 1.704L5 6.9 3.47 7.708l.292-1.704L2.525 4.798l1.71-.248L5 3z"/>
+  </svg>
+)
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
 )
 
@@ -407,6 +415,10 @@ export default function CleanChat() {
   const bottomRef                     = useRef(null)
   const fileInputRef                  = useRef(null)
   const textareaRef                   = useRef(null)
+  const [memoryOpen, setMemoryOpen]   = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [isSearching, setIsSearching] = useState(false)
 
   // Apply theme class
   useEffect(() => {
@@ -434,6 +446,38 @@ export default function CleanChat() {
     }
     fetchChats()
   }, [])
+
+  const handleSearch = async (val) => {
+    setSearchQuery(val)
+    if (!val.trim()) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+    setIsSearching(true)
+    try {
+      const { searchMessages } = await import('../api') // Dynamic import if needed or use imported one
+      const data = await searchMessages(val)
+      setSearchResults(data)
+    } catch (err) {
+      console.error('Search failed:', err)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const jumpToChat = async (chatId) => {
+    // Basic logic to switch to a chat
+    try {
+      const { getMessages } = await import('../api')
+      const data = await getMessages(chatId)
+      setMessages(data)
+      setSearchResults([])
+      setSearchQuery('')
+    } catch (err) {
+      console.error('Failed to jump to chat:', err)
+    }
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'auto' })
@@ -566,18 +610,59 @@ export default function CleanChat() {
           <button
             onClick={() => { setMessages([]); setInput('') }}
             className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border border-[var(--border-base)] 
-                       hover:bg-white/5 transition-all text-sm font-medium mb-6`}
+                       hover:bg-white/5 transition-all text-sm font-medium mb-4`}
           >
             <IconPlus />
             <span>New Chat</span>
           </button>
 
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+              <IconSearch />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search conversations..."
+              className="w-full bg-white/5 border border-[var(--border-base)] rounded-xl py-2 pl-9 pr-3 
+                         text-xs focus:border-accent/40 outline-none transition-all placeholder:text-[var(--text-muted)]/50"
+            />
+          </div>
+
           <div className="flex-1 overflow-y-auto space-y-1 pr-2">
             <h3 className="px-3 text-[11px] font-semibold opacity-30 uppercase tracking-widest mb-3 flex items-center gap-2">
               <IconHistory />
-              History
+              {searchQuery ? 'Search Results' : 'History'}
             </h3>
-            {chats.length === 0 ? (
+
+            {searchQuery ? (
+              <div className="space-y-4">
+                {isSearching ? (
+                  <p className="px-3 text-[10px] text-[var(--text-muted)] animate-pulse">Searching thoughts...</p>
+                ) : searchResults.length === 0 ? (
+                  <p className="px-3 text-[10px] text-[var(--text-muted)] italic">No matches found</p>
+                ) : (
+                  searchResults.map((res, i) => (
+                    <button
+                      key={i}
+                      onClick={() => jumpToChat(res.chatId)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl bg-accent/5 border border-accent/10 
+                                 hover:bg-accent/10 transition-all group"
+                    >
+                      <p className="text-[11px] text-accent font-medium mb-1 flex items-center justify-between">
+                        <span>{res.role === 'user' ? 'Message' : 'Response'}</span>
+                        <span className="text-[9px] opacity-50">{new Date(res.createdAt).toLocaleDateString()}</span>
+                      </p>
+                      <p className="text-[12px] opacity-80 line-clamp-2 leading-relaxed group-hover:opacity-100 italic">
+                        "{res.content}"
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : chats.length === 0 ? (
               <div className="px-3 py-8 text-center">
                 <p className="opacity-20 text-xs italic">No history yet</p>
               </div>
@@ -607,6 +692,19 @@ export default function CleanChat() {
               </div>
               <div className={`w-8 h-4 rounded-full relative transition-colors ${isDarkMode ? 'bg-purple-600' : 'bg-zinc-300'}`}>
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isDarkMode ? 'left-4.5' : 'left-0.5'}`} />
+              </div>
+            </button>
+
+            {/* AI Memory Button */}
+            <button
+              onClick={() => setMemoryOpen(true)}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl
+                         hover:bg-accent/10 hover:text-accent transition-all text-[13px] font-medium group"
+            >
+              <Brain className="w-4 h-4 text-[var(--text-muted)] group-hover:text-accent" />
+              <span>AI Memory</span>
+              <div className="ml-auto px-1.5 py-0.5 rounded-md bg-accent/10 text-[9px] text-accent uppercase font-bold tracking-wider">
+                Active
               </div>
             </button>
 
@@ -863,6 +961,7 @@ export default function CleanChat() {
         </div>
       </div>
     </div>
+    <MemoryPanel isOpen={memoryOpen} onClose={() => setMemoryOpen(false)} />
   </div>
   )
 }

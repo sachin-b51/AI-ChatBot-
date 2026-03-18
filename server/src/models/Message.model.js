@@ -11,7 +11,8 @@ const messageSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'assistant'], required: true },
   content: { type: String, required: true },
   webSearchUsed: { type: Boolean, default: false },
-  sources: [sourceSchema],
+  sources: { type: Array, default: [] },
+  embedding: { type: [Number], default: [] }, // For semantic search
   createdAt: { type: Date, default: Date.now },
 });
 
