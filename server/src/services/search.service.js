@@ -10,13 +10,12 @@ const shouldSearch = (text) => {
   return SEARCH_KEYWORDS.some((kw) => lower.includes(kw));
 };
 
-const webSearch = async (query) => {
+const serpstackSearch = async (query) => {
   try {
-    const response = await axios.get('https://serpapi.com/search', {
+    const response = await axios.get('http://api.serpstack.com/search', {
       params: { 
-        api_key: process.env.SERPAPI_KEY,
-        q: query,
-        engine: 'google',
+        access_key: process.env.SERPSTACK_API_KEY,
+        query: query,
         num: 5
       }
     });
@@ -24,13 +23,13 @@ const webSearch = async (query) => {
     const results = response.data?.organic_results || [];
     return results.slice(0, 5).map((r) => ({
       title: r.title || '',
-      url: r.link || '', // SerpApi uses 'link' instead of 'url'
+      url: r.url || r.link || '',
       description: r.snippet || '',
     }));
   } catch (err) {
-    console.error('SerpApi Search error:', err.message);
+    console.error('SerpStack Search error:', err.message);
     return [];
   }
 };
 
-module.exports = { shouldSearch, webSearch };
+module.exports = { shouldSearch, serpstackSearch };

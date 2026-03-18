@@ -3,7 +3,7 @@ const Chat = require('../models/Chat.model');
 const Message = require('../models/Message.model');
 const Memory = require('../models/Memory.model');
 const { getMemory } = require('../services/memory.service');
-const { shouldSearch, serpstackSearch } = require('../services/serpstack.service');
+const { shouldSearch, serpstackSearch } = require('../services/search.service');
 const { extractFacts } = require('../services/memoryExtraction.service');
 const { streamOpenAI, createEmbedding } = require('../services/openai.service');
 const { readUrl } = require('../services/reader.service');
@@ -214,6 +214,9 @@ exports.statelessMessage = async (req, res) => {
     const history = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
     const { webSearchEnabled = true, agenticMode = false } = req.body;
 
+    // Fetch persistent memories
+    const memories = await Memory.find().sort({ createdAt: -1 });
+
     // --- Agentic Handoff ---
     if (agenticMode) {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -243,7 +246,7 @@ exports.statelessMessage = async (req, res) => {
     let sources = [];
     let webSearchUsed = false;
     if (webSearchEnabled && !urlData && shouldSearch(userMessage)) {
-      sources = await webSearch(userMessage);
+      sources = await serpstackSearch(userMessage);
       webSearchUsed = sources.length > 0;
     }
 
@@ -257,7 +260,7 @@ exports.statelessMessage = async (req, res) => {
       res.write(`data: ${JSON.stringify({ sources })}\n\n`);
     }
 
-    await streamOpenAI(res, history, finalUserMessage, sources);
+    await streamOpenAI(res, history, finalUserMessage, sources, memories);
     res.end();
   } catch (err) {
     if (!res.headersSent) {
