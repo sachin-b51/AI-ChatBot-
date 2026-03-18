@@ -2,7 +2,7 @@
   "name": "project1",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd client && npm install && npm run build && cp -r dist ../dist",
+    "build": "cd client && npm install && npm run build",
     "install": "npm install --prefix client && npm install --prefix server"
   }
 }
