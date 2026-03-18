@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  /* Dark Theme (Default) */
+  --bg-app: #0f0f0f;
+  --bg-side: #171717;
+  --bg-card: #1a1a1a;
+  --text-base: rgba(255, 255, 255, 0.9);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --border-base: rgba(255, 255, 255, 0.08);
+  --accent: #7c6ffc;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+}
+
+.light-theme {
+  --bg-app: #f5f5f7;
+  --bg-side: #ffffff;
+  --bg-card: #ffffff;
+  --text-base: #1a1a1a;
+  --text-muted: #737373;
+  --border-base: rgba(0, 0, 0, 0.08);
+  --accent: #7c6ffc;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.1);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-app);
+  color: var(--text-base);
+  transition: background 0.3s ease, color 0.3s ease;
+  overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+
+/* Glass card */
+.glass {
+  background: var(--bg-surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+/* Gradient background orbs */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
