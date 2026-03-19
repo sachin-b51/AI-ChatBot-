@@ -28,8 +28,6 @@ app.use('/api', apiGuard, chatRoutes);
 app.use('/api/memories', apiGuard, require('./routes/memory.routes'));
 app.use('/api/search', apiGuard, require('./routes/search.routes'));
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 module.exports = app;
