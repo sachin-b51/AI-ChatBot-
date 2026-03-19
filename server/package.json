@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
+    "build": "echo 'Skipping build step'",
     "dev": "nodemon src/index.js"
   },
   "keywords": [],
