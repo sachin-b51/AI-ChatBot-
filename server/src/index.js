@@ -30,6 +30,7 @@ app.use(express.json());
 
 // Health check (no guard)
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/', (req, res) => res.send('AI ChatBot Backend is Running!'));
 
 // All API routes behind the secret guard
 app.use('/api', apiGuard, chatRoutes);
