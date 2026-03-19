@@ -101,8 +101,9 @@ const IconPlus = () => (
   </svg>
 )
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
-console.log('Chat App initialized with API_BASE:', API_BASE || '(relative path)');
+const RAW_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = RAW_BASE.replace(/\/api\/?$/, '');
+console.log('Chat App initialized. Domain:', API_BASE || '(relative)');
 const IconHistory = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

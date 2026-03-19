@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = import.meta.env.VITE_API_URL || '';
+const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
 const SECRET = import.meta.env.VITE_APP_SECRET || '';
 
 const api = axios.create({
